@@ -1,20 +1,19 @@
-"""
-Hill Climbing Algorithm for Test Suite Minimization (TSM)
-
-Este módulo implementa el algoritmo de Hill Climbing para minimizar
-un conjunto de tests manteniendo la misma cobertura de requisitos.
-"""
-
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 import numpy as np
 
+from src.hill_climbing_optimizer import HillClimbingOptimizer
 from src.preprocessing import PreprocessingModes
 
 
 class TestSuiteMinimizer:
-    def __init__(self, matrix_path):
+    def __init__(
+        self,
+        matrix_path,
+        max_iterations: Optional[int] = 1000,
+        initial_strategy: Optional[Literal["all", "greedy", "essential"]] = "all",
+    ):
         """
         Inicializa el minimizador con una matriz de cobertura.
 
@@ -25,6 +24,8 @@ class TestSuiteMinimizer:
         self.coverage_matrix = None
         self.num_requirements = 0
         self.num_tests = 0
+        self.max_iterations = max_iterations
+        self.initial_strategy = initial_strategy
 
     def load_matrix(self):
         """
@@ -112,6 +113,51 @@ class TestSuiteMinimizer:
         print(f"Cobertura máxima: {np.max(test_coverage)} requisitos")
         print("=" * 60 + "\n")
 
+    def check_solution_coverage(self, test_subset):
+        """
+        Verifica si un subconjunto de tests cubre todos los requisitos cubiertos originalmente.
+
+        Args:
+            test_subset (list): Lista de índices de tests
+
+        Returns:
+            bool: True si cubre todos los requisitos, False en caso contrario
+        """
+        if not test_subset:
+            return False
+
+        # Obtener requisitos cubiertos por el subconjunto
+        subset_matrix = self.coverage_matrix[:, test_subset]
+        covered_requirements = np.sum(subset_matrix, axis=1) > 0
+
+        # Obtener requisitos originalmente cubiertos
+        original_covered = np.sum(self.coverage_matrix, axis=1) > 0
+
+        # Verificar que todos los requisitos originales sigan cubiertos
+        return np.all(covered_requirements >= original_covered)
+
+    def calculate_coverage_percentage(self, test_subset):
+        """
+        Calcula el porcentaje de requisitos cubiertos por un subconjunto.
+
+        Args:
+            test_subset (list): Lista de índices de tests
+
+        Returns:
+            float: Porcentaje de cobertura (0-100)
+        """
+        if not test_subset:
+            return 0.0
+
+        subset_matrix = self.coverage_matrix[:, test_subset]
+        covered_requirements = np.sum(subset_matrix, axis=1) > 0
+        total_requirements = np.sum(np.sum(self.coverage_matrix, axis=1) > 0)
+
+        if total_requirements == 0:
+            return 100.0
+
+        return (np.sum(covered_requirements) / total_requirements) * 100
+
     def run(self, mode: Literal["A", "B", "C"] = "A"):
         print("\n\nIniciando Test Suite Minimizer...")
 
@@ -138,3 +184,12 @@ class TestSuiteMinimizer:
                 preprocessing_result = (
                     PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
                 )
+
+        # Ejecutar Hill Climbing Optimizer
+        print("\nEjecutando optimización Hill Climbing...")
+        optimizer = HillClimbingOptimizer(self)
+        optimization_result = optimizer.optimize(
+            initial_strategy=self.initial_strategy,  # type: ignore
+            max_iterations=self.max_iterations,  # type: ignore
+            verbose=True,
+        )

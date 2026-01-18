@@ -1,6 +1,6 @@
 import os
 
-from src.hill_climbing import TestSuiteMinimizer
+from src.test_suite_minimizer import TestSuiteMinimizer
 
 
 def main():

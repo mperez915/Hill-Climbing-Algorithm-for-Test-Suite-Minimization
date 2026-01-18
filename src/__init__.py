@@ -7,7 +7,8 @@ Módulos principales:
 - utils: Funciones auxiliares
 """
 
-from .hill_climbing import TestSuiteMinimizer
+from .test_suite_minimizer import TestSuiteMinimizer
+from .hill_climbing_optimizer import HillClimbingOptimizer
 from .preprocessing import PreprocessingModes
 from .utils import (
     calculate_coverage_percentage,
@@ -19,6 +20,7 @@ from .utils import (
 
 __all__ = [
     "TestSuiteMinimizer",
+    "HillClimbingOptimizer",
     "PreprocessingModes",
     "find_critical_requirements",
     "get_essential_tests",
