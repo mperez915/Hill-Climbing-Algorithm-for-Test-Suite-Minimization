@@ -194,7 +194,7 @@ class HillClimbingOptimizer:
 
         if verbose:
             print(f"\n{'=' * 70}")
-            print(f"HILL CLIMBING - TEST SUITE MINIMIZATION")
+            print("HILL CLIMBING - TEST SUITE MINIMIZATION")
             print(f"{'=' * 70}")
             print(f"\nSolución inicial: {len(current_solution)} tests")
             print(
@@ -275,6 +275,13 @@ class HillClimbingOptimizer:
         final_coverage = self.minimizer.calculate_coverage_percentage(best_solution)
         reduction_pct = (1 - len(best_solution) / self.num_tests) * 100
 
+        # Calcular métricas TSSR y FDCLOSS
+        from src.utils import calculate_fdcloss, calculate_tssr
+
+        original_tests = list(range(self.num_tests))
+        tssr = calculate_tssr(self.num_tests, len(best_solution))
+        fdcloss = calculate_fdcloss(self.coverage_matrix, original_tests, best_solution)
+
         result = {
             "solution": sorted(best_solution),
             "solution_size": len(best_solution),
@@ -287,20 +294,28 @@ class HillClimbingOptimizer:
             "improvements": improvements,
             "evaluations": evaluations,
             "history": history,
+            "tssr": tssr,
+            "fdcloss": fdcloss,
         }
 
         if verbose:
             print(f"\n{'=' * 70}")
-            print(f"RESULTADO FINAL")
+            print("RESULTADO FINAL")
             print(f"{'=' * 70}")
             print(f"Tests originales: {self.num_tests}")
             print(f"Tests en solución: {len(best_solution)}")
             print(f"Tests eliminados: {self.num_tests - len(best_solution)}")
             print(f"Reducción: {reduction_pct:.2f}%")
             print(f"Cobertura: {final_coverage:.2f}%")
-            print(f"Iteraciones: {iteration}")
-            print(f"Mejoras realizadas: {improvements}")
-            print(f"Evaluaciones totales: {evaluations}")
+            print("\nMÉTRICAS:")
+            print(f"  TSSR (Reducción de tamaño): {tssr:.4f} ({tssr * 100:.2f}%)")
+            print(
+                f"  FDCLOSS (Pérdida de cobertura): {fdcloss:.4f} ({fdcloss * 100:.2f}%)"
+            )
+            print("\nESTADÍSTICAS:")
+            print(f"  Iteraciones: {iteration}")
+            print(f"  Mejoras realizadas: {improvements}")
+            print(f"  Evaluaciones totales: {evaluations}")
             print(f"{'=' * 70}\n")
 
         return result

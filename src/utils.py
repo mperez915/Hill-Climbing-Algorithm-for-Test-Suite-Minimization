@@ -108,3 +108,122 @@ def list_available_matrices(matrices_dir=None):
 
     matrix_files = sorted(matrices_path.glob("matrix_*.txt"))
     return [str(f) for f in matrix_files]
+
+
+def calculate_tssr(original_size, minimized_size):
+    """
+    Calcula la métrica TSSR (Test Suite Size Reduction).
+
+    TSSR mide la reducción en el tamaño del conjunto de tests.
+    Un valor más alto indica mayor reducción.
+
+    Fórmula: TSSR = 1 - |S|/|T|
+    Donde:
+        |S| = tamaño del conjunto minimizado
+        |T| = tamaño del conjunto original
+
+    Args:
+        original_size (int): Número de tests en el conjunto original |T|
+        minimized_size (int): Número de tests en el conjunto minimizado |S|
+
+    Returns:
+        float: Valor de TSSR entre 0 y 1 (0 = sin reducción, 1 = reducción total)
+
+    Examples:
+        >>> calculate_tssr(100, 50)  # 50% de reducción
+        0.5
+        >>> calculate_tssr(100, 10)  # 90% de reducción
+        0.9
+    """
+    if original_size == 0:
+        return 0.0
+
+    tssr = 1 - (minimized_size / original_size)
+    return tssr
+
+
+def calculate_fdcloss(coverage_matrix, original_tests, minimized_tests):
+    """
+    Calcula la métrica FDCLOSS (Fault Detection Capability Loss).
+
+    FDCLOSS mide la pérdida de cobertura de requisitos entre el conjunto
+    original y el minimizado. Un valor más bajo es mejor.
+
+    Fórmula: FDCLOSS = 1 - |U(S)|/|U(T)|
+    Donde:
+        |U(S)| = requisitos cubiertos por el conjunto minimizado
+        |U(T)| = requisitos cubiertos por el conjunto original
+
+    Args:
+        coverage_matrix (numpy.ndarray): Matriz de cobertura completa
+        original_tests (list): Índices de los tests en el conjunto original
+        minimized_tests (list): Índices de los tests en el conjunto minimizado
+
+    Returns:
+        float: Valor de FDCLOSS entre 0 y 1 (0 = sin pérdida, 1 = pérdida total)
+              Idealmente debe ser 0.0 (sin pérdida de cobertura)
+
+    Examples:
+        >>> # Si ambos conjuntos cubren lo mismo: FDCLOSS = 0
+        >>> calculate_fdcloss(matrix, [0,1,2], [0,1])  # Ambos cubren 100%
+        0.0
+        >>> # Si el minimizado cubre menos: FDCLOSS > 0
+        >>> calculate_fdcloss(matrix, [0,1,2], [0])  # Pierde cobertura
+        0.33
+    """
+    # Calcular requisitos cubiertos por el conjunto original
+    if len(original_tests) == 0:
+        return 1.0  # Pérdida total si no hay tests originales
+
+    original_matrix = coverage_matrix[:, original_tests]
+    original_covered = np.sum(original_matrix, axis=1) > 0
+    u_t = np.sum(original_covered)  # |U(T)|
+
+    if u_t == 0:
+        return 0.0  # No hay requisitos cubiertos originalmente
+
+    # Calcular requisitos cubiertos por el conjunto minimizado
+    if len(minimized_tests) == 0:
+        return 1.0  # Pérdida total si no hay tests minimizados
+
+    minimized_matrix = coverage_matrix[:, minimized_tests]
+    minimized_covered = np.sum(minimized_matrix, axis=1) > 0
+    u_s = np.sum(minimized_covered)  # |U(S)|
+
+    # Calcular FDCLOSS
+    fdcloss = 1 - (u_s / u_t)
+    return fdcloss
+
+
+def calculate_metrics(coverage_matrix, original_tests, minimized_tests):
+    """
+    Calcula todas las métricas de evaluación para TSM.
+
+    Args:
+        coverage_matrix (numpy.ndarray): Matriz de cobertura completa
+        original_tests (list): Índices de los tests en el conjunto original
+        minimized_tests (list): Índices de los tests en el conjunto minimizado
+
+    Returns:
+        dict: Diccionario con las métricas calculadas:
+            - tssr: Test Suite Size Reduction (0-1, mayor es mejor)
+            - fdcloss: Fault Detection Capability Loss (0-1, menor es mejor)
+            - original_size: Tamaño del conjunto original
+            - minimized_size: Tamaño del conjunto minimizado
+            - reduction_count: Número de tests eliminados
+            - reduction_percentage: Porcentaje de reducción (0-100%)
+    """
+    original_size = len(original_tests)
+    minimized_size = len(minimized_tests)
+
+    tssr = calculate_tssr(original_size, minimized_size)
+    fdcloss = calculate_fdcloss(coverage_matrix, original_tests, minimized_tests)
+
+    return {
+        "tssr": tssr,
+        "fdcloss": fdcloss,
+        "original_size": original_size,
+        "minimized_size": minimized_size,
+        "reduction_count": original_size - minimized_size,
+        "reduction_percentage": tssr * 100,
+    }
