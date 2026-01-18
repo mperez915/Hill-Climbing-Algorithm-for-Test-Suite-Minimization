@@ -193,3 +193,8 @@ class TestSuiteMinimizer:
             max_iterations=self.max_iterations,  # type: ignore
             verbose=True,
         )
+
+        return {
+            "preprocessing": preprocessing_result,
+            "optimization": optimization_result,
+        }

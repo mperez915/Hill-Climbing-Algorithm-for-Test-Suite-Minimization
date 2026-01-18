@@ -84,7 +84,7 @@ class HillClimbingOptimizer:
 
         elif strategy == "essential":
             # Solo tests esenciales (cubren requisitos únicos)
-            from utils import get_essential_tests
+            from src.utils import get_essential_tests
 
             essential = get_essential_tests(self.coverage_matrix)
             return sorted(list(essential))
