@@ -6,8 +6,11 @@ un conjunto de tests manteniendo la misma cobertura de requisitos.
 """
 
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
+
+from src.preprocessing import PreprocessingModes
 
 
 class TestSuiteMinimizer:
@@ -60,7 +63,7 @@ class TestSuiteMinimizer:
             numpy.ndarray: Array con el número de tests que cubren cada requisito
         """
         # Sumar por filas (axis=1): suma todos los tests para cada requisito
-        coverage_per_requirement = np.sum(self.coverage_matrix, axis=1)
+        coverage_per_requirement = np.sum(self.coverage_matrix, axis=1)  # type: ignore
         return coverage_per_requirement
 
     def get_test_coverage(self):
@@ -71,7 +74,7 @@ class TestSuiteMinimizer:
             numpy.ndarray: Array con el número de requisitos que cubre cada test
         """
         # Sumar por columnas (axis=0): suma todos los requisitos para cada test
-        coverage_per_test = np.sum(self.coverage_matrix, axis=0)
+        coverage_per_test = np.sum(self.coverage_matrix, axis=0)  # type: ignore
         return coverage_per_test
 
     def print_matrix_info(self):
@@ -108,3 +111,30 @@ class TestSuiteMinimizer:
         print(f"Cobertura mínima: {np.min(test_coverage)} requisitos")
         print(f"Cobertura máxima: {np.max(test_coverage)} requisitos")
         print("=" * 60 + "\n")
+
+    def run(self, mode: Literal["A", "B", "C"] = "A"):
+        print("\n\nIniciando Test Suite Minimizer...")
+
+        # Cargar la matriz
+        self.load_matrix()
+
+        # Mostrar información
+        self.print_matrix_info()
+
+        # Aplicar preprocesamiento según el modo seleccionado
+        match mode:
+            case "A":
+                print("Aplicando Preprocesamiento Modo A...")
+                preprocessing_result = (
+                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
+                )
+            case "B":
+                print("Aplicando Preprocesamiento Modo B...")
+                preprocessing_result = (
+                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
+                )
+            case "C":
+                print("Aplicando Preprocesamiento Modo C...")
+                preprocessing_result = (
+                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
+                )
