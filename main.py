@@ -1,8 +1,69 @@
+import argparse
 import os
 from datetime import datetime
 from pathlib import Path
 
 from src.experimental_design import ExperimentalDesign
+
+
+def parse_arguments():
+    """
+    Parsea los argumentos de línea de comandos.
+
+    Returns:
+        argparse.Namespace: Argumentos parseados
+    """
+    parser = argparse.ArgumentParser(
+        description="Hill Climbing Algorithm para Test Suite Minimization",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Ejemplos de uso:
+  python main.py                                    # Configuración por defecto
+  python main.py --mode A --verbose                 # Modo A con salida detallada
+  python main.py --mode C --initial-strategy greedy # Modo C con estrategia greedy
+  python main.py --seeds 10 20 30 40 50             # Con semillas personalizadas
+  python main.py --mode B --seeds 1 2 3 --verbose   # Combinación de parámetros
+        """,
+    )
+
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["A", "B", "C"],
+        default="B",
+        help="Modo de preprocesamiento (default: B). A=Reducción de tests, B=Reducción de requisitos, C=Iterativo",
+    )
+
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Mostrar información detallada de cada ejecución (default: False)",
+    )
+
+    parser.add_argument(
+        "--initial-strategy",
+        type=str,
+        choices=["all", "greedy", "essential", "random"],
+        default="random",
+        help="Estrategia inicial del algoritmo (default: random)",
+    )
+
+    parser.add_argument(
+        "--seeds",
+        type=int,
+        nargs="+",
+        default=[42, 123, 456, 789, 1024],
+        help="Lista de semillas para múltiples ejecuciones (default: 42 123 456 789 1024)",
+    )
+
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=1000,
+        help="Número máximo de iteraciones del algoritmo (default: 1000)",
+    )
+
+    return parser.parse_args()
 
 
 def main():
@@ -12,6 +73,9 @@ def main():
     Ejecuta experimentos para cada matriz disponible y guarda los resultados
     en archivos individuales en la carpeta 'results/'.
     """
+    # Parsear argumentos de línea de comandos
+    args = parse_arguments()
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     matrices_dir = os.path.join(script_dir, "matrices")
     results_dir = os.path.join(script_dir, "results")
@@ -27,6 +91,12 @@ def main():
     print(f"{'=' * 80}")
     print(f"Matrices encontradas: {', '.join(matrix_files)}")
     print(f"Carpeta de resultados: {results_dir}")
+    print("\n--- CONFIGURACIÓN ---")
+    print(f"Modo de preprocesamiento: {args.mode}")
+    print(f"Estrategia inicial: {args.initial_strategy}")
+    print(f"Semillas: {args.seeds}")
+    print(f"Verbose: {args.verbose}")
+    print(f"Iteraciones máximas: {args.max_iterations}")
     print(f"{'=' * 80}\n")
 
     # Ejecutar experimento para cada matriz
@@ -47,8 +117,8 @@ def main():
         # Crear diseño experimental
         experiment = ExperimentalDesign(
             matrix_path=matrix_path,
-            max_iterations=1000,
-            initial_strategy="random",  # Opciones: "all", "greedy", "essential", "random"
+            max_iterations=args.max_iterations,
+            initial_strategy=args.initial_strategy,
         )
 
         # Redirigir salida a archivo
@@ -59,6 +129,13 @@ def main():
             f.write(
                 f"Fecha de ejecución: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
             )
+            f.write(f"{'=' * 80}\n")
+            f.write("Configuración:\n")
+            f.write(f"  - Modo de preprocesamiento: {args.mode}\n")
+            f.write(f"  - Estrategia inicial: {args.initial_strategy}\n")
+            f.write(f"  - Semillas: {args.seeds}\n")
+            f.write(f"  - Iteraciones máximas: {args.max_iterations}\n")
+            f.write(f"  - Verbose: {args.verbose}\n")
             f.write(f"{'=' * 80}\n\n")
 
             # Guardar stdout original
@@ -73,9 +150,9 @@ def main():
                 # Ejecutar experimento
                 print(">>> Ejecutando experimento con múltiples semillas...")
                 results = experiment.run_multiple_experiments(
-                    seeds=[42, 123, 456, 789, 1024],  # Al menos 5 semillas distintas
-                    mode="B",  # Opciones: "A", "B", "C"
-                    verbose=False,  # True para ver detalles de cada ejecución
+                    seeds=args.seeds,
+                    mode=args.mode,
+                    verbose=args.verbose,
                 )
 
                 # Imprimir reporte estadístico
@@ -88,7 +165,7 @@ def main():
         print(f"     ✓ Completado: {output_filename}")
 
     print(f"\n{'=' * 80}")
-    print(f"✓ TODOS LOS EXPERIMENTOS COMPLETADOS")
+    print("✓ TODOS LOS EXPERIMENTOS COMPLETADOS")
     print(f"{'=' * 80}")
     print(f"Resultados guardados en: {results_dir}/")
     print(f"Total de archivos generados: {len(matrix_files)}")
