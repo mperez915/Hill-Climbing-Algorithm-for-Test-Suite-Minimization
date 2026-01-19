@@ -40,6 +40,7 @@ class HillClimbingOptimizer:
                           'all' - Todos los tests
                           'greedy' - Selección greedy (mejor test primero)
                           'essential' - Solo tests esenciales
+                          'random' - Subconjunto aleatorio que mantiene cobertura
 
         Returns:
             list: Lista de índices de tests en la solución inicial
@@ -47,6 +48,29 @@ class HillClimbingOptimizer:
         if strategy == "all":
             # Todos los tests
             return list(range(self.num_tests))
+        
+        elif strategy == "random":
+            # Estrategia aleatoria: añadir tests en orden aleatorio hasta cubrir todo
+            solution = []
+            uncovered = set(range(self.num_requirements))
+            available_tests = list(range(self.num_tests))
+            np.random.shuffle(available_tests)  # Orden aleatorio
+
+            for test_idx in available_tests:
+                if not uncovered:
+                    break
+                
+                # Ver qué requisitos cubre este test
+                covered_by_test = set(
+                    np.where(self.coverage_matrix[:, test_idx] == 1)[0]
+                )
+                
+                # Si cubre algún requisito no cubierto, añadirlo
+                if covered_by_test & uncovered:
+                    solution.append(test_idx)
+                    uncovered -= covered_by_test
+
+            return sorted(solution)
 
         elif strategy == "greedy":
             # Estrategia greedy: añadir el test que cubre más requisitos no cubiertos
@@ -226,8 +250,8 @@ class HillClimbingOptimizer:
             neighbors = self.generate_neighbors(current_solution)
             evaluations += len(neighbors)
 
-            # Evaluar vecinos
-            best_neighbor = None
+            # Evaluar vecinos y mantener TODOS los que empatan con el mejor
+            best_neighbors = []
             best_neighbor_fitness = float("inf")
             best_neighbor_valid = False
 
@@ -235,10 +259,20 @@ class HillClimbingOptimizer:
                 fitness, is_valid = self.evaluate_solution(neighbor)
 
                 # Solo considerar vecinos válidos (cobertura completa)
-                if is_valid and fitness < best_neighbor_fitness:
-                    best_neighbor = neighbor
-                    best_neighbor_fitness = fitness
-                    best_neighbor_valid = is_valid
+                if is_valid:
+                    if fitness < best_neighbor_fitness:
+                        # Encontramos un vecino mejor, reiniciar la lista
+                        best_neighbors = [neighbor]
+                        best_neighbor_fitness = fitness
+                        best_neighbor_valid = is_valid
+                    elif fitness == best_neighbor_fitness:
+                        # Empate: agregar a la lista de candidatos
+                        best_neighbors.append(neighbor)
+            
+            # Si hay múltiples mejores vecinos (empate), elegir UNO AL AZAR
+            best_neighbor = None
+            if best_neighbors:
+                best_neighbor = best_neighbors[np.random.randint(len(best_neighbors))]
 
             # Si encontramos un mejor vecino, movernos a él
             if best_neighbor is not None and best_neighbor_fitness < current_fitness:

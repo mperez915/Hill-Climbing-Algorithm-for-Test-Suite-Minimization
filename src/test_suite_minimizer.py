@@ -12,7 +12,9 @@ class TestSuiteMinimizer:
         self,
         matrix_path,
         max_iterations: Optional[int] = 1000,
-        initial_strategy: Optional[Literal["all", "greedy", "essential"]] = "all",
+        initial_strategy: Optional[
+            Literal["all", "greedy", "essential", "random"]
+        ] = "all",
     ):
         """
         Inicializa el minimizador con una matriz de cobertura.
@@ -111,7 +113,6 @@ class TestSuiteMinimizer:
         print(f"Cobertura media por test: {np.mean(test_coverage):.2f} requisitos")
         print(f"Cobertura mínima: {np.min(test_coverage)} requisitos")
         print(f"Cobertura máxima: {np.max(test_coverage)} requisitos")
-        print("=" * 60 + "\n")
 
     def check_solution_coverage(self, test_subset):
         """
@@ -170,23 +171,30 @@ class TestSuiteMinimizer:
         # Aplicar preprocesamiento según el modo seleccionado
         match mode:
             case "A":
-                print("Aplicando Preprocesamiento Modo A...")
                 preprocessing_result = (
                     PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
                 )
             case "B":
-                print("Aplicando Preprocesamiento Modo B...")
                 preprocessing_result = (
                     PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
                 )
             case "C":
-                print("Aplicando Preprocesamiento Modo C...")
                 preprocessing_result = (
                     PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
                 )
 
+        # IMPORTANTE: Actualizar la matriz del minimizer con la matriz preprocesada
+        # Esto asegura que el Hill Climbing use la matriz reducida
+        if preprocessing_result is not None:
+            self.coverage_matrix = preprocessing_result["reduced_matrix"]
+            self.num_requirements = self.coverage_matrix.shape[0]
+            self.num_tests = self.coverage_matrix.shape[1]
+
+            print(
+                f"\nMatriz después del preprocesamiento: {self.num_requirements} requisitos x {self.num_tests} tests"
+            )
+
         # Ejecutar Hill Climbing Optimizer
-        print("\nEjecutando optimización Hill Climbing...")
         optimizer = HillClimbingOptimizer(self)
         optimization_result = optimizer.optimize(
             initial_strategy=self.initial_strategy,  # type: ignore
