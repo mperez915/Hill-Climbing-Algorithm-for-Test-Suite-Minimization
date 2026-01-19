@@ -32,6 +32,9 @@ class TestSuiteMinimizer:
     def load_matrix(self):
         """
         Carga la matriz de cobertura desde el archivo.
+        
+        IMPORTANTE: En el archivo, cada FILA representa un TEST y cada COLUMNA un REQUISITO.
+        La matriz se transpone para que internamente sea: requisitos x tests
 
         Returns:
             numpy.ndarray: Matriz de cobertura (requisitos x tests)
@@ -48,8 +51,12 @@ class TestSuiteMinimizer:
                 row = [int(char) for char in line if char in "01"]
                 matrix_data.append(row)
 
-        # Convertir a numpy array
-        self.coverage_matrix = np.array(matrix_data, dtype=int)
+        # Convertir a numpy array: cada fila es un test, cada columna un requisito
+        matrix_tests_x_reqs = np.array(matrix_data, dtype=int)
+        
+        # TRANSPONER: necesitamos requisitos x tests internamente
+        self.coverage_matrix = matrix_tests_x_reqs.T
+        
         self.num_requirements = self.coverage_matrix.shape[0]
         self.num_tests = self.coverage_matrix.shape[1]
 
