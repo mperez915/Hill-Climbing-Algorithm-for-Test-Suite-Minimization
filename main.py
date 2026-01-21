@@ -63,6 +63,12 @@ Ejemplos de uso:
         help="Número máximo de iteraciones del algoritmo (default: 1000)",
     )
 
+    parser.add_argument(
+        "--no-preprocessing",
+        action="store_true",
+        help="Ejecutar sin aplicar preprocesamiento a la matriz (default: False)",
+    )
+
     return parser.parse_args()
 
 
@@ -92,7 +98,10 @@ def main():
     print(f"Matrices encontradas: {', '.join(matrix_files)}")
     print(f"Carpeta de resultados: {results_dir}")
     print("\n--- CONFIGURACIÓN ---")
-    print(f"Modo de preprocesamiento: {args.mode}")
+    if args.no_preprocessing:
+        print(f"Preprocesamiento: DESACTIVADO")
+    else:
+        print(f"Modo de preprocesamiento: {args.mode}")
     print(f"Estrategia inicial: {args.initial_strategy}")
     print(f"Semillas: {args.seeds}")
     print(f"Verbose: {args.verbose}")
@@ -131,7 +140,10 @@ def main():
             )
             f.write(f"{'=' * 80}\n")
             f.write("Configuración:\n")
-            f.write(f"  - Modo de preprocesamiento: {args.mode}\n")
+            if args.no_preprocessing:
+                f.write(f"  - Preprocesamiento: DESACTIVADO\n")
+            else:
+                f.write(f"  - Modo de preprocesamiento: {args.mode}\n")
             f.write(f"  - Estrategia inicial: {args.initial_strategy}\n")
             f.write(f"  - Semillas: {args.seeds}\n")
             f.write(f"  - Iteraciones máximas: {args.max_iterations}\n")
@@ -153,6 +165,7 @@ def main():
                     seeds=args.seeds,
                     mode=args.mode,
                     verbose=args.verbose,
+                    apply_preprocessing=not args.no_preprocessing,
                 )
 
                 # Imprimir reporte estadístico

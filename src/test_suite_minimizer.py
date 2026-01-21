@@ -32,7 +32,7 @@ class TestSuiteMinimizer:
     def load_matrix(self):
         """
         Carga la matriz de cobertura desde el archivo.
-        
+
         IMPORTANTE: En el archivo, cada FILA representa un TEST y cada COLUMNA un REQUISITO.
         La matriz se transpone para que internamente sea: requisitos x tests
 
@@ -53,10 +53,10 @@ class TestSuiteMinimizer:
 
         # Convertir a numpy array: cada fila es un test, cada columna un requisito
         matrix_tests_x_reqs = np.array(matrix_data, dtype=int)
-        
+
         # TRANSPONER: necesitamos requisitos x tests internamente
         self.coverage_matrix = matrix_tests_x_reqs.T
-        
+
         self.num_requirements = self.coverage_matrix.shape[0]
         self.num_tests = self.coverage_matrix.shape[1]
 
@@ -166,7 +166,7 @@ class TestSuiteMinimizer:
 
         return (np.sum(covered_requirements) / total_requirements) * 100
 
-    def run(self, mode: Literal["A", "B", "C"] = "A"):
+    def run(self, mode: Literal["A", "B", "C"] = "A", apply_preprocessing: bool = True):
         print("\n\nIniciando Test Suite Minimizer...")
 
         # Cargar la matriz
@@ -175,25 +175,38 @@ class TestSuiteMinimizer:
         # Mostrar información
         self.print_matrix_info()
 
-        # Aplicar preprocesamiento según el modo seleccionado
-        match mode:
-            case "A":
-                preprocessing_result = (
-                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
-                )
-            case "B":
-                preprocessing_result = (
-                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
-                )
-            case "C":
-                preprocessing_result = (
-                    PreprocessingModes().apply_preprocessing_to_minimizer(self, mode)
-                )
+        # Aplicar preprocesamiento según el modo seleccionado si apply_preprocessing es True
+        preprocessing_result = None
+        if apply_preprocessing:
+            match mode:
+                case "A":
+                    preprocessing_result = (
+                        PreprocessingModes().apply_preprocessing_to_minimizer(
+                            self, mode
+                        )
+                    )
+                case "B":
+                    preprocessing_result = (
+                        PreprocessingModes().apply_preprocessing_to_minimizer(
+                            self, mode
+                        )
+                    )
+                case "C":
+                    preprocessing_result = (
+                        PreprocessingModes().apply_preprocessing_to_minimizer(
+                            self, mode
+                        )
+                    )
 
-        # IMPORTANTE: Actualizar la matriz del minimizer con la matriz preprocesada
-        # Esto asegura que el Hill Climbing use la matriz reducida
-        if preprocessing_result is not None:
-            self.coverage_matrix = preprocessing_result["reduced_matrix"]
+            # IMPORTANTE: Actualizar la matriz del minimizer con la matriz preprocesada
+            # Esto asegura que el Hill Climbing use la matriz reducida
+            if preprocessing_result is not None:
+                self.coverage_matrix = preprocessing_result["reduced_matrix"]
+        else:
+            print("\n⚠️  PREPROCESAMIENTO DESACTIVADO - Usando matriz original")
+            print(
+                f"Dimensiones: {self.coverage_matrix.shape[0]} requisitos x {self.coverage_matrix.shape[1]} tests\n"
+            )
             self.num_requirements = self.coverage_matrix.shape[0]
             self.num_tests = self.coverage_matrix.shape[1]
 

@@ -41,6 +41,7 @@ class ExperimentalDesign:
         seed: Optional[int],
         mode: Literal["A", "B", "C"] = "A",
         verbose: bool = False,
+        apply_preprocessing: bool = True,
     ) -> Dict:
         """
         Ejecuta una única ejecución del algoritmo con una semilla específica.
@@ -49,6 +50,7 @@ class ExperimentalDesign:
             seed: Semilla para reproducibilidad (None si es determinista)
             mode: Modo de preprocesamiento
             verbose: Mostrar información detallada
+            apply_preprocessing: Si se debe aplicar preprocesamiento (True) o no (False)
 
         Returns:
             Diccionario con los resultados de la ejecución
@@ -65,7 +67,7 @@ class ExperimentalDesign:
 
         # Medir tiempo de ejecución
         start_time = time.time()
-        result = minimizer.run(mode=mode)
+        result = minimizer.run(mode=mode, apply_preprocessing=apply_preprocessing)
         execution_time = time.time() - start_time
 
         # Extraer métricas relevantes
@@ -92,6 +94,7 @@ class ExperimentalDesign:
         num_runs: int = 5,
         mode: Literal["A", "B", "C"] = "A",
         verbose: bool = False,
+        apply_preprocessing: bool = True,
     ) -> Dict:
         """
         Ejecuta múltiples experimentos con diferentes semillas.
@@ -101,6 +104,7 @@ class ExperimentalDesign:
             num_runs: Número de ejecuciones si seeds es None
             mode: Modo de preprocesamiento
             verbose: Mostrar información detallada
+            apply_preprocessing: Si se debe aplicar preprocesamiento (True) o no (False)
 
         Returns:
             Diccionario con estadísticas agregadas y resultados individuales
@@ -127,7 +131,9 @@ class ExperimentalDesign:
         results = []
         for i, seed in enumerate(seeds, 1):
             print(f"\n--- Ejecución {i}/{len(seeds)} (Semilla: {seed}) ---")
-            result = self.run_single_experiment(seed, mode, verbose)
+            result = self.run_single_experiment(
+                seed, mode, verbose, apply_preprocessing
+            )
             results.append(result)
 
             # Mostrar resumen de esta ejecución

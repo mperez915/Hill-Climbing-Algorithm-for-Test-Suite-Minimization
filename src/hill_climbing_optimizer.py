@@ -350,6 +350,47 @@ class HillClimbingOptimizer:
             print(f"  Iteraciones: {iteration}")
             print(f"  Mejoras realizadas: {improvements}")
             print(f"  Evaluaciones totales: {evaluations}")
-            print(f"{'=' * 70}\n")
+            print(f"{'=' * 70}")
+            
+            # Imprimir matriz resultante
+            print(f"\n{'=' * 70}")
+            print("MATRIZ RESULTANTE (solo tests en la solución)")
+            print(f"{'=' * 70}")
+            
+            # Obtener submatriz con solo los tests de la solución
+            result_matrix = self.coverage_matrix[:, sorted(best_solution)]
+            num_reqs_actual = result_matrix.shape[0]
+            num_tests_actual = result_matrix.shape[1]
+            
+            print(f"Dimensiones: {num_reqs_actual} requisitos x {num_tests_actual} tests")
+            print(f"Tests seleccionados: {sorted(best_solution)}\n")
+            
+            # Imprimir la matriz
+            print("Matriz de cobertura (1 = cubierto, 0 = no cubierto):")
+            print("-" * 70)
+            
+            # Encabezado con índices de tests
+            header = "Req |"
+            for test_idx in sorted(best_solution):
+                header += f" T{test_idx:>3} |"
+            print(header)
+            print("-" * len(header))
+            
+            # Filas de requisitos
+            for req_idx in range(num_reqs_actual):
+                row = f"R{req_idx:>2}  |"
+                for col_idx in range(num_tests_actual):
+                    value = int(result_matrix[req_idx, col_idx])
+                    row += f"  {value}   |"
+                print(row)
+            print("-" * len(header))
+            
+            # Verificación de cobertura por requisito
+            print("\nCobertura por requisito:")
+            for req_idx in range(num_reqs_actual):
+                num_tests_covering = int(np.sum(result_matrix[req_idx, :]))
+                print(f"  Requisito {req_idx:>2}: cubierto por {num_tests_covering} test(s)")
+            
+            print(f"\n{'=' * 70}\n")
 
         return result
