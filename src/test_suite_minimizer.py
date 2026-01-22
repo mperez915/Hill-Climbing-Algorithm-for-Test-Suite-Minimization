@@ -202,6 +202,9 @@ class TestSuiteMinimizer:
             # Esto asegura que el Hill Climbing use la matriz reducida
             if preprocessing_result is not None:
                 self.coverage_matrix = preprocessing_result["reduced_matrix"]
+                # Actualizar dimensiones después del preprocesamiento
+                self.num_requirements = self.coverage_matrix.shape[0]
+                self.num_tests = self.coverage_matrix.shape[1]
         else:
             print("\n⚠️  PREPROCESAMIENTO DESACTIVADO - Usando matriz original")
             print(
@@ -210,9 +213,9 @@ class TestSuiteMinimizer:
             self.num_requirements = self.coverage_matrix.shape[0]
             self.num_tests = self.coverage_matrix.shape[1]
 
-            print(
-                f"\nMatriz después del preprocesamiento: {self.num_requirements} requisitos x {self.num_tests} tests"
-            )
+        print(
+            f"\nMatriz después del preprocesamiento: {self.num_requirements} requisitos x {self.num_tests} tests"
+        )
 
         # Ejecutar Hill Climbing Optimizer
         optimizer = HillClimbingOptimizer(self)

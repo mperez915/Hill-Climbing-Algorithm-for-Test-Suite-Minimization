@@ -77,25 +77,18 @@ class PreprocessingModes:
                     duplicate_tests.append(test_j)
                     to_remove.add(test_j)
                 else:
-                    # Verificar dominancia
+                    # Verificar dominancia (SOLO UNIDIRECCIONAL: i -> j)
                     # test_i domina a test_j si cubre todo lo de j y más
                     i_covers_j = np.all(coverage_j <= coverage_i)
                     i_covers_more = not np.array_equal(coverage_i, coverage_j)
 
                     if i_covers_j and i_covers_more:
-                        # test_i domina a test_j
+                        # test_i domina a test_j, eliminar test_j
                         dominated_tests.append(test_j)
                         to_remove.add(test_j)
-                    else:
-                        # test_j domina a test_i si cubre todo lo de i y más
-                        j_covers_i = np.all(coverage_i <= coverage_j)
-                        j_covers_more = not np.array_equal(coverage_i, coverage_j)
-
-                        if j_covers_i and j_covers_more:
-                            # test_j domina a test_i
-                            dominated_tests.append(test_i)
-                            to_remove.add(test_i)
-                            break  # test_i está dominado, pasar al siguiente
+                    # NOTA: No permitimos que test_j elimine a test_i
+                    # porque test_i ya fue validado contra todos los tests anteriores.
+                    # Esto previene cadenas de dominancia que reducen demasiado la suite.
 
         # Tests que se mantienen
         tests_to_keep = [t for t in non_empty_tests if t not in to_remove]
