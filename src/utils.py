@@ -12,12 +12,12 @@ def find_critical_requirements(coverage_matrix):
     Identifica requisitos críticos (cubiertos por un solo test).
 
     Args:
-        coverage_matrix (numpy.ndarray): Matriz de cobertura
+        coverage_matrix (numpy.ndarray): Matriz de cobertura (tests x requisitos)
 
     Returns:
         numpy.ndarray: Índices de los requisitos críticos
     """
-    req_coverage = np.sum(coverage_matrix, axis=1)
+    req_coverage = np.sum(coverage_matrix, axis=0)
     critical = np.where(req_coverage == 1)[0]
     return critical
 
@@ -37,7 +37,7 @@ def get_essential_tests(coverage_matrix):
 
     for req_idx in critical_reqs:
         # Encontrar qué test cubre este requisito crítico
-        test_idx = np.where(coverage_matrix[req_idx, :] == 1)[0][0]
+        test_idx = np.where(coverage_matrix[:, req_idx] == 1)[0][0]
         essential_tests.add(test_idx)
 
     return essential_tests
@@ -57,13 +57,13 @@ def calculate_coverage_percentage(coverage_matrix, test_subset):
     if len(test_subset) == 0:
         return 0.0
 
-    # Seleccionar solo las columnas de los tests en el subconjunto
-    subset_matrix = coverage_matrix[:, test_subset]
+    # Seleccionar solo las filas de los tests en el subconjunto
+    subset_matrix = coverage_matrix[test_subset, :]
 
     # Un requisito está cubierto si al menos un test lo cubre
-    covered_requirements = np.sum(subset_matrix, axis=1) > 0
+    covered_requirements = np.sum(subset_matrix, axis=0) > 0
 
-    total_requirements = coverage_matrix.shape[0]
+    total_requirements = coverage_matrix.shape[1]
     covered_count = np.sum(covered_requirements)
 
     return (covered_count / total_requirements) * 100
@@ -175,8 +175,8 @@ def calculate_fdcloss(coverage_matrix, original_tests, minimized_tests):
     if len(original_tests) == 0:
         return 1.0  # Pérdida total si no hay tests originales
 
-    original_matrix = coverage_matrix[:, original_tests]
-    original_covered = np.sum(original_matrix, axis=1) > 0
+    original_matrix = coverage_matrix[original_tests, :]
+    original_covered = np.sum(original_matrix, axis=0) > 0
     u_t = np.sum(original_covered)  # |U(T)|
 
     if u_t == 0:
@@ -184,10 +184,10 @@ def calculate_fdcloss(coverage_matrix, original_tests, minimized_tests):
 
     # Calcular requisitos cubiertos por el conjunto minimizado
     if len(minimized_tests) == 0:
-        return 1.0  # Pérdida total si no hay tests minimizados
+        return 1.0  # Pérdida total si no hay tests en la minimización
 
-    minimized_matrix = coverage_matrix[:, minimized_tests]
-    minimized_covered = np.sum(minimized_matrix, axis=1) > 0
+    minimized_matrix = coverage_matrix[minimized_tests, :]
+    minimized_covered = np.sum(minimized_matrix, axis=0) > 0
     u_s = np.sum(minimized_covered)  # |U(S)|
 
     # Calcular FDCLOSS

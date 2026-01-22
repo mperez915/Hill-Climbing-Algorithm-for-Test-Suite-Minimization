@@ -62,7 +62,7 @@ class HillClimbingOptimizer:
                 
                 # Ver qué requisitos cubre este test
                 covered_by_test = set(
-                    np.where(self.coverage_matrix[:, test_idx] == 1)[0]
+                    np.where(self.coverage_matrix[test_idx, :] == 1)[0]
                 )
                 
                 # Si cubre algún requisito no cubierto, añadirlo
@@ -87,7 +87,7 @@ class HillClimbingOptimizer:
 
                     # Contar cuántos requisitos no cubiertos cubre este test
                     covered_by_test = set(
-                        np.where(self.coverage_matrix[:, test_idx] == 1)[0]
+                        np.where(self.coverage_matrix[test_idx, :] == 1)[0]
                     )
                     new_coverage = len(covered_by_test & uncovered)
 
@@ -100,7 +100,7 @@ class HillClimbingOptimizer:
 
                 solution.append(best_test)
                 covered_by_best = set(
-                    np.where(self.coverage_matrix[:, best_test] == 1)[0]
+                    np.where(self.coverage_matrix[best_test, :] == 1)[0]
                 )
                 uncovered -= covered_by_best
 
@@ -358,11 +358,11 @@ class HillClimbingOptimizer:
             print(f"{'=' * 70}")
             
             # Obtener submatriz con solo los tests de la solución
-            result_matrix = self.coverage_matrix[:, sorted(best_solution)]
-            num_reqs_actual = result_matrix.shape[0]
-            num_tests_actual = result_matrix.shape[1]
+            result_matrix = self.coverage_matrix[sorted(best_solution), :]
+            num_tests_actual = result_matrix.shape[0]
+            num_reqs_actual = result_matrix.shape[1]
             
-            print(f"Dimensiones: {num_reqs_actual} requisitos x {num_tests_actual} tests")
+            print(f"Dimensiones: {num_tests_actual} tests x {num_reqs_actual} requisitos")
             print(f"Tests seleccionados: {sorted(best_solution)}\n")
             
             # Imprimir la matriz
@@ -379,8 +379,8 @@ class HillClimbingOptimizer:
             # Filas de requisitos
             for req_idx in range(num_reqs_actual):
                 row = f"R{req_idx:>2}  |"
-                for col_idx in range(num_tests_actual):
-                    value = int(result_matrix[req_idx, col_idx])
+                for test_idx_pos in range(num_tests_actual):
+                    value = int(result_matrix[test_idx_pos, req_idx])
                     row += f"  {value}   |"
                 print(row)
             print("-" * len(header))
@@ -388,7 +388,7 @@ class HillClimbingOptimizer:
             # Verificación de cobertura por requisito
             print("\nCobertura por requisito:")
             for req_idx in range(num_reqs_actual):
-                num_tests_covering = int(np.sum(result_matrix[req_idx, :]))
+                num_tests_covering = int(np.sum(result_matrix[:, req_idx]))
                 print(f"  Requisito {req_idx:>2}: cubierto por {num_tests_covering} test(s)")
             
             print(f"\n{'=' * 70}\n")

@@ -30,12 +30,12 @@ class PreprocessingModes:
         Dominancia: t1 domina a t2 si cubre todos los requisitos de t2 y al menos uno más.
 
         Args:
-            coverage_matrix (numpy.ndarray): Matriz original (requisitos x tests)
+            coverage_matrix (numpy.ndarray): Matriz original (tests x requisitos)
 
         Returns:
             tuple: (matriz_reducida, indices_tests_mantenidos, info_eliminacion)
         """
-        num_requirements, num_tests = coverage_matrix.shape
+        num_tests, num_requirements = coverage_matrix.shape
         tests_to_keep = []
 
         # Información de eliminación
@@ -45,7 +45,7 @@ class PreprocessingModes:
 
         # 1. Identificar tests vacíos (no cubren ningún requisito)
         for test_idx in range(num_tests):
-            if np.sum(coverage_matrix[:, test_idx]) == 0:
+            if np.sum(coverage_matrix[test_idx, :]) == 0:
                 empty_tests.append(test_idx)
 
         # Tests no vacíos
@@ -61,7 +61,7 @@ class PreprocessingModes:
             if test_i in to_remove:
                 continue
 
-            coverage_i = coverage_matrix[:, test_i]
+            coverage_i = coverage_matrix[test_i, :]
 
             for j in range(i + 1, len(non_empty_tests)):
                 test_j = non_empty_tests[j]
@@ -69,7 +69,7 @@ class PreprocessingModes:
                 if test_j in to_remove:
                     continue
 
-                coverage_j = coverage_matrix[:, test_j]
+                coverage_j = coverage_matrix[test_j, :]
 
                 # Verificar si son duplicados
                 if np.array_equal(coverage_i, coverage_j):
@@ -98,7 +98,7 @@ class PreprocessingModes:
             tests_to_keep = non_empty_tests[:1] if non_empty_tests else [0]
 
         # Crear matriz reducida
-        reduced_matrix = coverage_matrix[:, tests_to_keep]
+        reduced_matrix = coverage_matrix[tests_to_keep, :]
 
         elimination_info = {
             "empty": empty_tests,
@@ -126,12 +126,12 @@ class PreprocessingModes:
         subconjunto estricto de los tests que cubren r1 (r1 es más difícil de satisfacer).
 
         Args:
-            coverage_matrix (numpy.ndarray): Matriz original (requisitos x tests)
+            coverage_matrix (numpy.ndarray): Matriz original (tests x requisitos)
 
         Returns:
             tuple: (matriz_reducida, indices_requisitos_mantenidos, info_eliminacion)
         """
-        num_requirements, num_tests = coverage_matrix.shape
+        num_tests, num_requirements = coverage_matrix.shape
         requirements_to_keep = []
 
         # Información de eliminación
@@ -140,7 +140,7 @@ class PreprocessingModes:
 
         # 1. Identificar requisitos no cubiertos
         for req_idx in range(num_requirements):
-            if np.sum(coverage_matrix[req_idx, :]) == 0:
+            if np.sum(coverage_matrix[:, req_idx]) == 0:
                 uncovered_reqs.append(req_idx)
 
         # Requisitos cubiertos
@@ -156,7 +156,7 @@ class PreprocessingModes:
                 continue
 
             # Obtener tests que cubren req_i
-            tests_covering_i = set(np.where(coverage_matrix[req_i, :] == 1)[0])
+            tests_covering_i = set(np.where(coverage_matrix[:, req_i] == 1)[0])
 
             for j in range(len(covered_reqs)):
                 if i == j:
@@ -168,7 +168,7 @@ class PreprocessingModes:
                     continue
 
                 # Obtener tests que cubren req_j
-                tests_covering_j = set(np.where(coverage_matrix[req_j, :] == 1)[0])
+                tests_covering_j = set(np.where(coverage_matrix[:, req_j] == 1)[0])
 
                 # req_i domina a req_j si:
                 # - tests_covering_j es subconjunto estricto de tests_covering_i
@@ -186,7 +186,7 @@ class PreprocessingModes:
             requirements_to_keep = covered_reqs[:1] if covered_reqs else [0]
 
         # Crear matriz reducida
-        reduced_matrix = coverage_matrix[requirements_to_keep, :]
+        reduced_matrix = coverage_matrix[:, requirements_to_keep]
 
         elimination_info = {
             "uncovered": uncovered_reqs,
@@ -208,15 +208,15 @@ class PreprocessingModes:
         - Se alcance el número máximo de iteraciones
 
         Args:
-            coverage_matrix (numpy.ndarray): Matriz original (requisitos x tests)
+            coverage_matrix (numpy.ndarray): Matriz original (tests x requisitos)
             max_iterations (int): Número máximo de iteraciones
 
         Returns:
             tuple: (matriz_reducida, indices_tests_mantenidos, indices_reqs_mantenidos, info)
         """
         current_matrix = coverage_matrix.copy()
-        original_req_indices = list(range(coverage_matrix.shape[0]))
-        original_test_indices = list(range(coverage_matrix.shape[1]))
+        original_test_indices = list(range(coverage_matrix.shape[0]))
+        original_req_indices = list(range(coverage_matrix.shape[1]))
 
         iteration = 0
         total_tests_eliminated = 0
@@ -281,16 +281,16 @@ class PreprocessingModes:
             "original_shape": coverage_matrix.shape,
             "final_shape": current_matrix.shape,
             "reduction_percentage_tests": (
-                1 - current_matrix.shape[1] / coverage_matrix.shape[1]
-            )
-            * 100
-            if coverage_matrix.shape[1] > 0
-            else 0,
-            "reduction_percentage_reqs": (
                 1 - current_matrix.shape[0] / coverage_matrix.shape[0]
             )
             * 100
             if coverage_matrix.shape[0] > 0
+            else 0,
+            "reduction_percentage_reqs": (
+                1 - current_matrix.shape[1] / coverage_matrix.shape[1]
+            )
+            * 100
+            if coverage_matrix.shape[1] > 0
             else 0,
         }
 
@@ -372,10 +372,10 @@ class PreprocessingModes:
             print("\n--- REDUCCIÓN COMBINADA (ITERATIVA) ---")
             print(f"Iteraciones realizadas: {info['iterations']}")
             print(
-                f"\nDimensiones originales: {info['original_shape'][0]} requisitos x {info['original_shape'][1]} tests"
+                f"\nDimensiones originales: {info['original_shape'][0]} tests x {info['original_shape'][1]} requisitos"
             )
             print(
-                f"Dimensiones finales: {info['final_shape'][0]} requisitos x {info['final_shape'][1]} tests"
+                f"Dimensiones finales: {info['final_shape'][0]} tests x {info['final_shape'][1]} requisitos"
             )
 
             print("\nTests:")
@@ -430,7 +430,7 @@ class PreprocessingModes:
                 {
                     "reduced_matrix": reduced_matrix,
                     "kept_test_indices": kept_tests,
-                    "kept_req_indices": list(range(original_matrix.shape[0])),
+                    "kept_req_indices": list(range(original_matrix.shape[1])),
                     "info": info,
                 }
             )
@@ -441,7 +441,7 @@ class PreprocessingModes:
             result.update(
                 {
                     "reduced_matrix": reduced_matrix,
-                    "kept_test_indices": list(range(original_matrix.shape[1])),
+                    "kept_test_indices": list(range(original_matrix.shape[0])),
                     "kept_req_indices": kept_reqs,
                     "info": info,
                 }
